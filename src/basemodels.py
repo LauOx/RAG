@@ -16,7 +16,7 @@ class MinimalSource(BaseModel):
     def first_less_than_last(self) -> Self:
         if self.first_character_index >= self.last_character_index:
             raise ModelError(
-                "MinimalSource's first character index "
+                "MinimalSource's / Chunk first character index "
                 f"({self.first_character_index}) "
                 "must be less than last character index "
                 f"({self.last_character_index}).")
@@ -67,3 +67,20 @@ class StudentSearchResults(BaseModel):
 class StudentSearchResultsAndAnswer(BaseModel):
     search_results: list[MinimalAnswer]
     k: int = Field(gt=0)
+
+
+class Chunk(MinimalSource):
+    chunk_text: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def text_matches_indices(self) -> Self:
+        expected_length: int = (
+            self.last_character_index - self.first_character_index
+            )
+        if len(self.chunk_text) != expected_length:
+            raise ModelError(f"Chunk text length {len(self.chunk_text)} "
+                             "does not match first and last character index "
+                             f"({self.last_character_index} - "
+                             f"{self.first_character_index} "
+                             f"= {expected_length})")
+        return self
